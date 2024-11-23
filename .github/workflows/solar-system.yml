@@ -126,6 +126,6 @@ jobs:
                 docker logs solar-system-app
 
                 echo Testing Image URL using wget
-                wget -q -o localhost:3000/live | grep live
+                wget -q -O localhost:3000/live | grep live
                 
               
