@@ -135,6 +135,6 @@ jobs:
                 context: .
                 push: true
                 # se genera una version nueva basada en el sha del commit
-                tags: solar-system:${{ github.sha }}
+                tags: ${{ vars.DOCKER_USERNAME }}/solar-system:${{ github.sha }}
                 
               
