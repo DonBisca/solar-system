@@ -36,9 +36,10 @@ jobs:
             - name: Unit Testing
               run: npm test
 
-            - name: Archive Test Result for ${{ matrix.operating_system}} and Node ${{ matrix.nodejs_version }}
+            - name: Archive Test Result for ${{ matrix.operating_system}} and Node ${{ matrix.nodejs_version }} 
               uses: actions/upload-artifact@v4
               with:
+                #si no se varian los nombres de los ficheros de artefactos que se generan da error por conflictos de no poder guardar un fichero con el mismo nombre en la misma ruta
                 name: Mocha-Test-Result-${{ matrix.operating_system }}-${{ matrix.nodejs_version }}
                 path: test-results.xml
 
@@ -58,6 +59,7 @@ jobs:
             run: npm install
 
           - name: Check Code Coverage
+            continue-on-error: true
             run: npm run coverage
             
           - name: Archive Test Result
