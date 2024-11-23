@@ -101,8 +101,7 @@ jobs:
                 username: ${{ vars.DOCKER_USERNAME }}
                 password: ${{ secrets.DOCKER_PASSWORD }}
 
-            - name: Docker Build for Testing
-              
+            - name: Docker Build for Testing             
               uses: docker/build-push-action@v6
               with:
                 # ruta donde se tiene el Dockerfile
@@ -128,5 +127,13 @@ jobs:
 
                 echo Testing Image URL using wget
                 wget -q -O - 127.0.0.1:3000/live | grep live
+            - name: Docker Push          
+              uses: docker/build-push-action@v6
+              with:
+                # ruta donde se tiene el Dockerfile
+                context: .
+                push: true
+                # se genera una version nueva basada en el sha del commit
+                tags: solar-system:${{ github.sha }}
                 
               
