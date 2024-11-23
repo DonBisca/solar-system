@@ -34,9 +34,11 @@ jobs:
               run: npm install
             
             - name: Unit Testing
+              id: nodejs-unit-testing-step
               run: npm test
 
             - name: Archive Test Result for ${{ matrix.operating_system}} and Node ${{ matrix.nodejs_version }} 
+              if: steps.nodejs-unit-testing-step.outcome == 'failure' || steps.nodejs-unit-testing-step.outcome == 'success'
               uses: actions/upload-artifact@v4
               with:
                 #si no se varian los nombres de los ficheros de artefactos que se generan da error por conflictos de no poder guardar un fichero con el mismo nombre en la misma ruta
