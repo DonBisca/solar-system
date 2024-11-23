@@ -30,6 +30,14 @@ jobs:
               with:
                 node-version: ${{ matrix.nodejs_version }}
             
+            - name: Cache NPM Dependencies
+              uses: actions/cache@v4
+              with:
+                path: node_modules
+                # sele da un nombre unico a la key de estos ficheros en cahe haciendo un hash del fichero package-lock.json, cualquier cambio que reciba este fichero
+                # que se genere un nuevo valor y cambie la cache por la nueva que se genere
+                key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+
             - name: Install Dependencies
               run: npm install
             
@@ -56,7 +64,15 @@ jobs:
             uses: actions/setup-node@v4
             with:
                 node-version: 18
-            
+                
+          - name: Cache NPM Dependencies
+            uses: actions/cache@v4
+            with:
+                path: node_modules
+                # sele da un nombre unico a la key de estos ficheros en cahe haciendo un hash del fichero package-lock.json, cualquier cambio que reciba este fichero
+                # que se genere un nuevo valor y cambie la cache por la nueva que se genere
+                key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+
           - name: Install Dependencies
             run: npm install
 
