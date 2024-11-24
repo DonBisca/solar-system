@@ -186,20 +186,29 @@ jobs:
                     ${{ vars.DOCKER_USERNAME }}/solar-system:${{ github.sha }}
                     ghcr.io/donbisca/solar-system:${{ github.sha }}
                     
-    dev-deploy:
-      needs: docker
-      runs-on: ubuntu-latest
-      steps:
-        - name: Checkout Repo
-          uses: actions/checkout@v4
+    # dev-deploy:
+    #   needs: docker
+    #   runs-on: ubuntu-latest
+    #   steps:
+    #     - name: Checkout Repo
+    #       uses: actions/checkout@v4
         
-        - name: Install kubectl CLI
-          uses: azure/setup-kubectl@v4
-          with:
-           version: 'v1.26.0'
-        
-        - name: Fetch Kubernetes Cluster Details
-          run: |
-            kubectl version --short
-            echo --------------------------------------
-            kubectl get nodes -o wide
+    #     - name: Install kubectl CLI
+    #       uses: azure/setup-kubectl@v4
+    #       with:
+    #        version: 'v1.26.0'
+
+    #     - name: Set KubeConfig
+    #       uses: azure/k8s-set-context@v4
+    #       with:
+    #         method: kubeconfig
+    #         # aqui va un fichero kubeconfig de nuestro cluster
+    #         kubeconfig: ${{ secrets.KUBECONFIG}}
+    #         # aqui va el nombre del cluster al que deseamos conectarnos en caso de que en nuestro kubeconfig haya mas de uno
+    #         context: [context]
+
+    #     - name: Fetch Kubernetes Cluster Details
+    #       run: |
+    #         kubectl version --short
+    #         echo --------------------------------------
+    #         kubectl get nodes -o wide
