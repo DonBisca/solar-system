@@ -188,7 +188,7 @@ jobs:
                     
     dev-deploy:
       needs: docker
-    #se usa para cojer variables seteadas a nivel de entorno en la configuracion de environment de github
+      #se usa para cojer variables seteadas a nivel de entorno en la configuracion de environment de github
       environment: 
         name: development
         url: https://${{ steps.set-ingress-host-address.outputs.APP_INGRESS_HOST }}
@@ -258,7 +258,7 @@ jobs:
           run: |
             kubectl apply -f kubernetes/development
 
-    integration-testing:
+    dev-integration-testing:
         name: Dev Integration Testing
         needs: dev-deploy
         runs-on: ubuntu-latest
@@ -266,6 +266,91 @@ jobs:
           - name: Test URL Output using CURL and JQ
             env:
                 URL: ${{ needs.dev-deploy.outputs.APP_INGRESS_URL }}
+            run: |
+              echo $URL
+              echo "--------------------------------"
+              curl https://$URL/live -s -k | jq -r .status | grep -i live
+
+    prod-deploy:
+      needs: dev-integration-testing
+    #se usa para cojer variables seteadas a nivel de entorno en la configuracion de environment de github
+      environment: 
+        name: production
+        url: https://${{ steps.set-ingress-host-address.outputs.APP_INGRESS_HOST }}
+      outputs:
+        APP_INGRESS_URL: ${{ steps.set-ingress-host-address.outputs.APP_INGRESS_HOST }}
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout Repo
+          uses: actions/checkout@v4
+        
+        - name: Install kubectl CLI
+          uses: azure/setup-kubectl@v4
+          with:
+           version: 'v1.26.0'
+
+        - name: Set KubeConfig
+          uses: azure/k8s-set-context@v4
+          with:
+            method: kubeconfig
+            # aqui va un fichero kubeconfig de nuestro cluster
+            kubeconfig: ${{ secrets.KUBECONFIG}}
+            # aqui va el nombre del cluster al que deseamos conectarnos en caso de que en nuestro kubeconfig haya mas de uno
+            context: [context]
+
+        - name: Fetch Kubernetes Cluster Details
+          run: |
+            kubectl version --short
+            echo --------------------------------------
+            kubectl get nodes -o wide
+        
+        - name: Save Nginx Ingress Controller IP as a GITHUB Environment Variable
+        # todo lo que se añada a GITHUB_ENV será accesible desde otros steps
+          run: |
+              echo "INGRESS_IP=$(kubectl -n ingress-nginx get services ingress-nginx-controller -o jsonpath="{.status.loadBalancer.ingress[0].ip}")" >> $GITHUB_ENV
+
+        - name: Replace Token in Manifest files
+          uses: cschleiden/replace-tokens@v1
+          with:
+            tokenPrefix: '${'
+            tokenSuffix: '}'
+            files: '["kubernetes/development/*.yaml"]'
+          env:
+            NAMESPACE: ${{ vars.NAMESPACE }}
+            REPLICAS: ${{ vars.REPLICAS }}
+            IMAGE: ${{ env.DOCKERHUB_USERNAME }}/solar-system:${{ github.sha }}
+            INGRESS_IP: ${{ env.INGRESS_IP }}
+        
+        - name: Check Files
+          run: |
+           cat kubernetes/production/*.yaml
+        
+        - name: Set Application Ingress Host URL
+          id: set-ingress-host-address
+          run: |
+            echo "APP_INGRESS_HOST=$(kubectl -n ${{ vars.NAMESPACE }} get ingress -o jsonpath="{.item[0].spec.tls[0].host[0]}")" >> "$GITHUB_OUTPUT"
+
+        - name: Create MongoDB Secret
+          run: |
+            kubectl -n ${{ vars.NAMESPACE }} create secret generic mongo-db-creds \
+            --from-literal=MONGO_URI=${{ env.MONGO_URI }} \
+            --from-literal=MONGO_USERNAME=${{ env.MONGO_USERNAME }} \
+            --from-literal=MONGO_PASSWORD=${{ secrets.MONGO_PASSWORD }} \
+            --save-config \
+            --dry-run=client \
+            -o yaml | kubectl apply -f -
+        - name: Deploy to Prod Env
+          run: |
+            kubectl apply -f kubernetes/production
+
+    prod-integration-testing:
+        name: Prod Integration Testing
+        needs: prod-deploy
+        runs-on: ubuntu-latest
+        steps:
+          - name: Test URL Output using CURL and JQ
+            env:
+                URL: ${{ needs.prod-deploy.outputs.APP_INGRESS_URL }}
             run: |
               echo $URL
               echo "--------------------------------"
