@@ -101,6 +101,15 @@ jobs:
                 username: ${{ vars.DOCKER_USERNAME }}
                 password: ${{ secrets.DOCKER_PASSWORD }}
 
+            - name: GHCR Login
+              uses: docker/login-action@v3
+              with:
+                registry: ghcr.io
+                # el usuario se recupera del contexto de github  
+                username: ${{ github.repository_owner }}
+                # el token de github en este caso no hace falta crearlo como un secreto, se genera automaticamente
+                password: ${{ secrets.GITHUB_TOKEN }}
+
             - name: Docker Build for Testing             
               uses: docker/build-push-action@v6
               with:
@@ -128,13 +137,26 @@ jobs:
 
                 echo Testing Image URL using wget
                 wget -q -O - 127.0.0.1:3000/live | grep live
-            - name: Docker Push          
+
+            # - name: Docker Push          
+            #   uses: docker/build-push-action@v6
+            #   with:
+            #     # ruta donde se tiene el Dockerfile
+            #     context: .
+            #     push: true
+            #     # se genera una version nueva basada en el sha del commit
+            #     tags: ${{ vars.DOCKER_USERNAME }}/solar-system:${{ github.sha }}
+            
+            # ahora se va a hacer el push a Docker hub y GHCR
+            - name: Container Registry Push          
               uses: docker/build-push-action@v6
               with:
                 # ruta donde se tiene el Dockerfile
                 context: .
                 push: true
                 # se genera una version nueva basada en el sha del commit
-                tags: ${{ vars.DOCKER_USERNAME }}/solar-system:${{ github.sha }}
+                tags: |
+                    ${{ vars.DOCKER_USERNAME }}/solar-system:${{ github.sha }}
+                    ghcr.io/${{ github.repository_owner }}/solar-system:${{ github.sha }}
                 
               
