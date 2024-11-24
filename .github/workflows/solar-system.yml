@@ -190,8 +190,8 @@ jobs:
       needs: docker
       runs-on: ubuntu-latest
       steps:
-        - name: Checkout
-          uses: actions/checkout
+        - name: Checkout Repo
+          uses: actions/checkout@v4
         
         - name: Install kubectl CLI
           uses: azure/setup-kubectl@v4
