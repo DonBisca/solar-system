@@ -13,6 +13,16 @@ env:
 jobs:
     unit-testing:
         name: Unit Testing
+        # este service container se usa para que se conecte a una base de datos alojada en un contenedor que se usara para pruebas en vez de a una que este alojada en un ambiente productivo
+        services:
+          mongo-db:
+            image: siddharth67/mongo-db:non-prod
+            ports:
+              - 27017:27017
+        env:
+            MONGO_URI: 'mongodb//localhost:27017/superData'
+            MONGO_USERNAME: non-prod-user
+            MONGO_PASSWORD: non-prod-password
         strategy:
           matrix:
             nodejs_version: [18, 20]
@@ -21,6 +31,7 @@ jobs:
                 - nodejs_version: 18
                   operating_system: macos-latest
         runs-on: ${{ matrix.operating_system }}
+        
         steps:
             - name: Checkout Repository
               uses: actions/checkout@v4
